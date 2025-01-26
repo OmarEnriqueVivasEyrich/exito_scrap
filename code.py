@@ -1,30 +1,38 @@
 import streamlit as st
-from browserless import Browserless
+import requests
+from bs4 import BeautifulSoup
 
-# Configura la clave API de Browserless
-browserless = Browserless(api_key="tu_clave_api_aqui")
-
-# Función para interactuar con el navegador
-def interact_with_browser():
+# Función para hacer scraping de la página
+def scrape_website():
+    url = 'https://www.exito.com/tecnologia/computadores'
+    
     try:
-        # Lanza el navegador con Browserless
-        browser = browserless.launch(headless=True)
-        page = browser.new_page()
+        # Realizamos una solicitud GET a la página
+        response = requests.get(url)
+        response.raise_for_status()  # Verifica si la solicitud fue exitosa
 
-        # Navegar a la página
-        page.goto("https://www.exito.com/tecnologia/computadores")
+        # Creamos el objeto BeautifulSoup para analizar el HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Realizar acciones
-        page.click('[data-fs-dropdown-button="true"]')
-        page.click('//button[@data-fs-dropdown-item="true" and .//span[text()="Más vendidos"]]')
+        # Encontramos el título de la página como ejemplo de extracción
+        title = soup.title.text
 
-        st.success("¡Interacción con la página realizada correctamente!")
-        browser.close()
-    except Exception as e:
-        st.error(f"Se produjo un error: {e}")
+        # Mostramos el título en Streamlit
+        st.write(f"El título de la página es: {title}")
 
-# Interfaz de usuario en Streamlit
-st.title("Automatización de Interacción con Browserless")
+        # Ejemplo de extracción de información: Botón "Ordenar por"
+        ordenar_button = soup.find('button', {'data-fs-dropdown-button': 'true'})
+        if ordenar_button:
+            st.write("Se encontró el botón 'Ordenar por'.")
+        else:
+            st.write("No se encontró el botón 'Ordenar por'.")
 
-if st.button("Ejecutar"):
-    interact_with_browser()
+    except requests.exceptions.RequestException as e:
+        st.error(f"Se ha producido un error: {e}")
+
+# Interfaz en Streamlit
+st.title("Web Scraping con BeautifulSoup")
+
+# Botón para ejecutar el scraping
+if st.button("Ejecutar Web Scraping"):
+    scrape_website()
