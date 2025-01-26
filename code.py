@@ -1,53 +1,37 @@
 import streamlit as st
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-import time
+from playwright.sync_api import sync_playwright
 
 # Configuración de la página de Streamlit
-st.set_page_config(page_title="Automatización con Selenium", layout="centered")
+st.set_page_config(page_title="Automatización con Playwright", layout="centered")
 
-# Función para interactuar con el navegador y hacer clic en los botones
+# Función para interactuar con el navegador
 def interact_with_browser():
-    # Configuración de Chrome en modo headless
-    options = Options()
-    options.add_argument('--headless')  # Modo sin interfaz gráfica
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    
     try:
-        # Configura y descarga automáticamente el controlador ChromeDriver
-        service = Service(ChromeDriverManager().install())
-        browser = webdriver.Chrome(service=service, options=options)
+        with sync_playwright() as p:
+            # Usamos Chromium en modo headless
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        # Navega a la página
-        browser.get('https://www.exito.com/tecnologia/computadores')
+            # Navegamos a la página
+            page.goto('https://www.exito.com/tecnologia/computadores')
 
-        # Hacemos clic en el botón "Ordenar por"
-        time.sleep(5)
-        boton_ordenar = browser.find_element(By.CSS_SELECTOR, '[data-fs-dropdown-button="true"]')
-        boton_ordenar.click()
+            # Hacemos clic en el botón "Ordenar por"
+            page.wait_for_selector('[data-fs-dropdown-button="true"]')
+            page.click('[data-fs-dropdown-button="true"]')
 
-        # Hacemos clic en el botón "Más vendidos"
-        time.sleep(2)
-        boton_mas_vendidos = browser.find_element(By.XPATH, '//button[@data-fs-dropdown-item="true" and .//span[text()="Más vendidos"]]')
-        boton_mas_vendidos.click()
+            # Hacemos clic en el botón "Más vendidos"
+            page.wait_for_selector('//button[@data-fs-dropdown-item="true" and .//span[text()="Más vendidos"]]')
+            page.click('//button[@data-fs-dropdown-item="true" and .//span[text()="Más vendidos"]]')
 
-        time.sleep(2)
-        st.success("¡Se hizo clic en 'Más vendidos' correctamente!")
-    
+            st.success("¡Se hizo clic en 'Más vendidos' correctamente!")
+            browser.close()
+
     except Exception as e:
         st.error(f"Se produjo un error: {e}")
 
-    finally:
-        # Cerramos el navegador
-        browser.quit()
-
 # Interfaz de usuario en Streamlit
-st.title("Automatización de Interacción con Selenium")
+st.title("Automatización de Interacción con Playwright")
 
 if st.button("Ejecutar"):
-    st.info("Ejecutando el script con Selenium...")
+    st.info("Ejecutando el script con Playwright...")
     interact_with_browser()
